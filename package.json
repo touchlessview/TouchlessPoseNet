@@ -1,0 +1,31 @@
+{
+  "name": "strCamera",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/touchlessview/strCamera.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/touchlessview/strCamera/issues"
+  },
+  "homepage": "https://github.com/touchlessview/strCamera#readme",
+  "devDependencies": {
+    "@types/lodash": "^4.14.149",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.8.2",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15"
+  }
+}
