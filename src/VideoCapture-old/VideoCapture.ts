@@ -1,6 +1,6 @@
 import { IVideoSettings, IConstraints } from './Intefases'
 
-export default class VideoCapture {
+export class VideoCapture {
   _parentId: string
   _id: string
   _class: string

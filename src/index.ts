@@ -1,6 +1,7 @@
-//import * as _ from 'lodash';
-import VideoCapture from './VideoCapture/VideoCapture'
+import { VideoCapture } from './VideoCapture-old'
 import CanvasCapture from './CanvasCapture/CanvasCapture'
+
+// import * as poseNet from '@tensorflow-models/posenet';
 
 let canvasCapture = null
 let videoCapture = new VideoCapture({
