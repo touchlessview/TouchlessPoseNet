@@ -13,7 +13,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             title: 'Touchless PoseNet',
             template: './src/index.html'
-        })
+        }),
     ],
     module: {
         rules: [
@@ -21,10 +21,14 @@ module.exports = {
                 test: /\.tsx?$/,
                 use: 'ts-loader',
                 exclude: /node_modules/
-            }
+            },
+            {
+                test: /\.mp4$/,
+                use: 'file-loader?name=videos/[name].[ext]',
+            },
         ]
     },
     resolve: {
-        extensions: [ '.tsx', '.ts', '.js' ]
+        extensions: ['.tsx', '.ts', '.js']
     }
 };

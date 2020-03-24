@@ -1,4 +1,4 @@
-export interface FrameRate {
+export interface VideoFrameRate {
   ideal: number;
   min: number;
 }
@@ -6,7 +6,7 @@ export interface FrameRate {
 export interface VideoProps {
   width: number;
   height: number;
-  frameRate: FrameRate;
+  frameRate: VideoFrameRate;
 }
 
 export interface Constraints {
@@ -21,10 +21,15 @@ export interface Config {
   hidden?: boolean;
   width?: number;
   height?: number;
+  cameraRotate?: 0 | 90 | -90;
   autoplay?: boolean;
   audio?: boolean;
-  frameRate?: FrameRate;
+  videoFrameRate?: VideoFrameRate;
+  frameRate?: number;
   source?: string;
+  passiveLeft?: number;
+  passiveRight?: number;
+  activeCenter?: number;
 }
 
 export const defaultVideoConfig: Config = {
@@ -33,10 +38,15 @@ export const defaultVideoConfig: Config = {
   audio: false,
   width: 640,
   height: 480,
-  frameRate: {
-    ideal: 60,
+  cameraRotate: 0, 
+  videoFrameRate: {
+    ideal: 30,
     min: 10
   },
+  frameRate: 10,
   autoplay: true,
-  hidden: false
+  hidden: false,
+  passiveLeft: 0,
+  passiveRight: 0,
+  activeCenter: 50,
 };
