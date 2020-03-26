@@ -55,7 +55,7 @@ export class Poses {
       // this._poses$.next([])
     }
   }
-  async activePose(poses: Pose[]) {
+  activePose(poses: Pose[]) : Pose | null {
     if (poses.length === 0) {
       return null;
     } else {

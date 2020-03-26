@@ -9,7 +9,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist')
     },
     plugins: [
-        new CleanWebpackPlugin(),
+        //new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({
             title: 'Touchless PoseNet',
             template: './src/index.html'
