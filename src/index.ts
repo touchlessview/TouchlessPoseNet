@@ -1,11 +1,9 @@
-import { Stream } from './lib/stream'
-import { Poses } from './lib/poseNet'
-import { mergeMap, map } from 'rxjs/operators';
+import { TouchlessView } from './lib/touchlessView'
 
-const stream = new Stream()
-const poseNet = new Poses()
+const tv = new TouchlessView()
 
-stream.frames$.pipe(
-  mergeMap( image => poseNet.estimatePoses(image)),
-  map( poses => poseNet.activePose(poses) )
-).subscribe(v => console.log(v))
+tv.create()
+
+tv.didMount(()=> {
+  tv.viewer.create() 
+});
