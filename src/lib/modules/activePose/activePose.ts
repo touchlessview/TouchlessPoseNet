@@ -49,7 +49,7 @@ export class ActivePose extends StreamModule {
     x <= this.config.scene.width - this.config.scene.passiveRight
   }
 
-  public stream() {
+  public operator() {
     return <T>(source: Observable<Pose[]>) => 
     source.pipe(switchMap(posers => of(this.getActiveIndex(posers))))
   }

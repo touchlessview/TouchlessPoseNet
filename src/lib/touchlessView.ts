@@ -31,8 +31,8 @@ export class TouchlessView extends StreamModule {
     this.activePose.create();
 
     this.poses$ = this.imageStream.frames$.pipe(
-      this.poseNet.stream(),
-      this.activePose.stream()
+      this.poseNet.operator(),
+      this.activePose.operator()
       )
     this.activePose$ = this.poses$.pipe(map(data => data.poses[data.activeIndex[0]]))
 

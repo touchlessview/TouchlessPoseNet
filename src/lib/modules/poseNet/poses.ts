@@ -59,7 +59,7 @@ export class PoseNetClass extends StreamModule {
     }
   } 
   
-  public stream() {
+  public operator() {
     return <T>(source: Observable<ImageData>) => 
     source.pipe(switchMap(image => from(this._estimatePoses(image))))
   }
