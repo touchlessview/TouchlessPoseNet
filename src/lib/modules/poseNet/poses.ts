@@ -43,6 +43,11 @@ export class PoseNetClass extends StreamModule {
     }
   }
 
+  public operator() {
+    return <T>(source: Observable<ImageData>) => 
+    source.pipe(switchMap(image => from(this._estimatePoses(image))))
+  }
+
   public async asyncEstimatePoses(imageData: ImageData) {
     if (this._isMounted) {
       return await this.net.estimateMultiplePoses(imageData, this.inferenceConfig);
@@ -58,9 +63,4 @@ export class PoseNetClass extends StreamModule {
       return Promise.resolve([])
     }
   } 
-  
-  public operator() {
-    return <T>(source: Observable<ImageData>) => 
-    source.pipe(switchMap(image => from(this._estimatePoses(image))))
-  }
 }

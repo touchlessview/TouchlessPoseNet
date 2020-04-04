@@ -1,6 +1,6 @@
 import { Keypoint, Pose } from '@tensorflow-models/posenet';
 //import { SceneActive } from '../poseNet';
-import { Kp } from '../touchless.types';
+//import { Kp } from '../touchless.types';
 
 
 export class Helper {

@@ -8,11 +8,6 @@ export interface ActivePoseFilters {
   main?: FilterFunction;
 }
 
-export interface ActivePoses {
-  activeIndex: number[],
-  poses: Pose[]
-}
-
 export interface SceneConfig {
   width?: number
   height?: number

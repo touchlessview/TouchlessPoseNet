@@ -3,8 +3,8 @@ import { Pose, Keypoint } from '@tensorflow-models/posenet';
 import { StreamModule } from '../streamModule';
 import { Helper } from '../helper'
 import { Kp, ActivePoses } from '../touchless.types';
-import { Observable, from, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export class ActivePose extends StreamModule {
 
@@ -24,6 +24,11 @@ export class ActivePose extends StreamModule {
     if (!this.getActiveIndex) {
       this.getActiveIndex = this._getActiveIndex;
     }
+  }
+
+  public operator() {
+    return <T>(source: Observable<Pose[]>) => 
+    source.pipe(map(poses => this.getActiveIndex(poses)))
   }
 
   private _getActiveIndex(poses: Pose[]):  ActivePoses {
@@ -48,10 +53,4 @@ export class ActivePose extends StreamModule {
     return  x >= this.config.scene.passiveLeft ||  
     x <= this.config.scene.width - this.config.scene.passiveRight
   }
-
-  public operator() {
-    return <T>(source: Observable<Pose[]>) => 
-    source.pipe(switchMap(posers => of(this.getActiveIndex(posers))))
-  }
-  
 }

@@ -29,6 +29,8 @@ export class ImageStream extends StreamModule {
       this.context = this.canvasElement.getContext('2d');
       this.canvasElement.width = this.config.videoElement.width;
       this.canvasElement.height = this.config.videoElement.height;
+      // this.context.translate(this.canvasElement.width, 0);
+      // this.context.scale(-1,1);
       this._stream()
       this._didMount();
     } else {

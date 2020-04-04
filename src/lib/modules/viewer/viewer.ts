@@ -32,7 +32,6 @@ export class PoseViewer extends StreamModule {
       this.context = this.canvasElement.getContext('2d');
       this.context.font = "10px serif";
       document.body.appendChild(this.canvasElement);
-      
       this.viewStream();
       this._didMount();
     }
