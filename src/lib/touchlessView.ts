@@ -1,8 +1,8 @@
-import { StreamModule, VideoStreem, ImageStream, PoseNetClass, PoseViewer , ActivePose } from './modules';
-import { ActivePoses } from './modules/touchless.types';
-import { switchMap, map } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { StreamModule, VideoStreem, ImageStream, PoseNetClass, PoseViewer, ActivePose, SwipeTracking } from './modules';
+import { ActivePoses, PoseTime } from './modules/touchless.types';
+import { map, filter } from 'rxjs/operators';
 import { Pose } from '@tensorflow-models/posenet';
+import { ReplaySubject, Observable } from 'rxjs';
 
 export class TouchlessView extends StreamModule {
   videoStream: VideoStreem;
@@ -10,9 +10,11 @@ export class TouchlessView extends StreamModule {
   poseNet: PoseNetClass;
   viewer: PoseViewer;
   activePose: ActivePose;
+  swipeTracking: SwipeTracking;
   poses$: Observable<ActivePoses>
-  activePose$: Observable<Pose>
-  
+  activePose$: Observable<PoseTime>
+  swipeData$: any
+
   constructor() {
     super()
     this.videoStream = new VideoStreem();
@@ -20,6 +22,7 @@ export class TouchlessView extends StreamModule {
     this.poseNet = new PoseNetClass();
     this.activePose = new ActivePose();
     this.viewer = new PoseViewer();
+    this.swipeTracking = new SwipeTracking();
   }
 
   public async create() {
@@ -29,14 +32,27 @@ export class TouchlessView extends StreamModule {
     this.imageStream.setConfig({ videoElement: this.videoStream.videoElement })
     this.imageStream.create();
     this.activePose.create();
+    this.swipeTracking.create();
 
     this.poses$ = this.imageStream.frames$.pipe(
       this.poseNet.operator(),
       this.activePose.operator()
-      )
-    this.activePose$ = this.poses$.pipe(map(data => data.poses[data.activeIndex[0]]))
+    )
 
-    this.viewer.setConfig({ 
+    this.activePose$ = this.poses$.pipe(
+      filter(data => typeof data.activeIndex[0] === 'number' ), 
+      map(data => { return { ...data.poses[data.activeIndex[0]], time: new Date().getTime() }})
+      )
+
+    this.swipeData$ = this.activePose$.pipe(
+      this.swipeTracking.operator()
+    )
+
+    this.swipeData$.subscribe(
+      val => console.log(val)
+    )
+    
+    this.viewer.setConfig({
       canvasElement: this.imageStream.canvasElement,
       imageSream$: this.imageStream.frames$,
       poses$: this.poses$
@@ -45,7 +61,7 @@ export class TouchlessView extends StreamModule {
   }
 
   public setConfig() {
-    
+
   }
 
 

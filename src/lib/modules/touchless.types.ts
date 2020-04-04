@@ -10,6 +10,10 @@ export interface ActivePoses {
   poses: Pose[]
 }
 
+export interface PoseTime extends Pose {
+  time: number
+}
+
 export enum Kp {
   nose,
   leftEye,
