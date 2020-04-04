@@ -19,7 +19,7 @@ export interface ViewerConfig {
   passiveLeft?: number;
   passiveRight?: number;
   imageSream$?: Observable<ImageData>
-  activePoses$?: Observable<ActivePoses>
+  poses$?: Observable<ActivePoses>
   draw?: DrawViewer
 }
 

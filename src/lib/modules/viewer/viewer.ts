@@ -39,8 +39,8 @@ export class PoseViewer extends StreamModule {
   }
 
   private viewStream() {
-    if (this.config.activePoses$ && this.config.imageSream$) {
-      let view$ = combineLatest(this.config.imageSream$, this.config.activePoses$)
+    if (this.config.poses$ && this.config.imageSream$) {
+      let view$ = combineLatest(this.config.imageSream$, this.config.poses$)
       view$.subscribe(data => {
         this.context.putImageData(data[0], 0, 0);
         let activeIndex = data[1].activeIndex || []

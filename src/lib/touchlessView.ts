@@ -10,8 +10,8 @@ export class TouchlessView extends StreamModule {
   poseNet: PoseNetClass;
   viewer: PoseViewer;
   activePose: ActivePose;
-  poses$: Observable<Pose[]>
-  activePoses$: Observable<ActivePoses>
+  poses$: Observable<ActivePoses>
+  activePose$: Observable<Pose>
   
   constructor() {
     super()
@@ -30,13 +30,16 @@ export class TouchlessView extends StreamModule {
     this.imageStream.create();
     this.activePose.create();
 
-    this.poses$ = this.imageStream.frames$.pipe(this.poseNet.stream())
-    this.activePoses$ = this.poses$.pipe(this.activePose.stream())
+    this.poses$ = this.imageStream.frames$.pipe(
+      this.poseNet.stream(),
+      this.activePose.stream()
+      )
+    this.activePose$ = this.poses$.pipe(map(data => data.poses[data.activeIndex[0]]))
 
     this.viewer.setConfig({ 
       canvasElement: this.imageStream.canvasElement,
       imageSream$: this.imageStream.frames$,
-      activePoses$: this.activePoses$
+      poses$: this.poses$
     })
     this._didMount();
   }
