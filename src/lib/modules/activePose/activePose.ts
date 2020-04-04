@@ -2,19 +2,18 @@ import { defaultActivePoseConfig, ActivePoseFilters, ActivePosesConfig, PoseConf
 import { Pose, Keypoint } from '@tensorflow-models/posenet';
 import { StreamModule } from '../streamModule';
 import { Helper } from '../helper'
-import { Kp } from '../touchless.types';
+import { Kp, ActivePoses } from '../touchless.types';
 import { Observable, from, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 export class ActivePose extends StreamModule {
 
   config: ActivePosesConfig;
-  getIndexes: (poses: Pose[]) => number[];
+  getActiveIndex: (poses: Pose[]) => ActivePoses;
 
   constructor(config?: ActivePosesConfig) {
     super()
     this.config = { ...defaultActivePoseConfig, ...config }
-    this.getIndexes = this._getIndexes;
   }
 
   public setConfig(config?: ActivePosesConfig): void {
@@ -22,10 +21,12 @@ export class ActivePose extends StreamModule {
   }
 
   public async create() {
-
+    if (!this.getActiveIndex) {
+      this.getActiveIndex = this._getActiveIndex;
+    }
   }
 
-  private _getIndexes(poses: Pose[]): number[] {
+  private _getActiveIndex(poses: Pose[]):  ActivePoses {
     let minDist = this.config.scene.width;
     let indexRes = undefined;
     poses.forEach(({ score, keypoints }, index) => {
@@ -41,16 +42,16 @@ export class ActivePose extends StreamModule {
         }
       }
     })
-    return [indexRes]
+    return { activeIndex: [indexRes], poses } 
   }
   public isInActiveZone({x}) {
     return  x >= this.config.scene.passiveLeft ||  
     x <= this.config.scene.width - this.config.scene.passiveRight
   }
 
-  public indexesStream() {
+  public stream() {
     return <T>(source: Observable<Pose[]>) => 
-    source.pipe(switchMap(posers => of(this._getIndexes(posers))))
+    source.pipe(switchMap(posers => of(this.getActiveIndex(posers))))
   }
   
 }

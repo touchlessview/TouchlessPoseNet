@@ -1,6 +1,13 @@
+import { Pose } from "@tensorflow-models/posenet/dist/types";
+
 export enum TouchlessEventType {
   SlideLeft = 'SlideLeft',
   SlideRight = 'SlideRight'
+}
+
+export interface ActivePoses {
+  activeIndex: number[],
+  poses: Pose[]
 }
 
 export enum Kp {

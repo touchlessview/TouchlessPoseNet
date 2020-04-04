@@ -1,12 +1,13 @@
 import { defaultViewerConfig, ViewerConfig, PointArr } from './config';
 import { StreamModule } from '../streamModule';
+import { ActivePoses } from '../touchless.types';
 import { Keypoint,  getAdjacentKeyPoints } from '@tensorflow-models/posenet';
+import { combineLatest } from 'rxjs';
 
 
 export class PoseViewer extends StreamModule {
 
   imageData: ImageData;
-  activeIndexes: number[];
   config: ViewerConfig;
   canvasElement: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
@@ -16,7 +17,6 @@ export class PoseViewer extends StreamModule {
     this.config = { ...defaultViewerConfig, ...config };
     this.drawKeypoints = this.drawKeypoints.bind(this);
     this.drawSkeleton = this.drawSkeleton.bind(this);
-    this.activeIndexes = []
   }
 
   public setConfig(config?: ViewerConfig): void {
@@ -33,36 +33,22 @@ export class PoseViewer extends StreamModule {
       this.context.font = "10px serif";
       document.body.appendChild(this.canvasElement);
       
-      this.imageStream();
-      this.poseStream();
-      this.indexesStream();
+      this.viewStream();
       this._didMount();
     }
   }
-  private poseStream() {
-    if (this.config.poses$) {
-      this.config.poses$.subscribe(poses => {
-        this.context.putImageData(this.imageData, 0, 0);
-        poses.forEach(({ keypoints }, index) => {
-          const isActive = this.activeIndexes.indexOf(index) != -1
+
+  private viewStream() {
+    if (this.config.activePoses$ && this.config.imageSream$) {
+      let view$ = combineLatest(this.config.imageSream$, this.config.activePoses$)
+      view$.subscribe(data => {
+        this.context.putImageData(data[0], 0, 0);
+        let activeIndex = data[1].activeIndex || []
+        data[1].poses.forEach(({ keypoints }, index) => {
+          const isActive = activeIndex.indexOf(index) != -1
           this.drawKeypoints(keypoints, isActive);
           this.drawSkeleton(keypoints, isActive);
         })
-      })
-    }
-  }
-  private imageStream() {
-    if (this.config.imageSream$) {
-      this.config.imageSream$.subscribe(imageData => {
-        this.imageData = imageData
-      })
-    }
-  }
-
-  private indexesStream() {
-    if (this.config.activeIndexes$) {
-      this.config.activeIndexes$.subscribe(indexes => {
-        this.activeIndexes = indexes.filter(item => item !== undefined) || []
       })
     }
   }

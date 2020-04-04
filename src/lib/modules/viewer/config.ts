@@ -1,4 +1,5 @@
 import { Observable } from "rxjs";
+import { ActivePoses } from '../touchless.types';
 import { Pose } from '@tensorflow-models/posenet';
 
 export type PointArr = [number, number] | any[]
@@ -18,8 +19,7 @@ export interface ViewerConfig {
   passiveLeft?: number;
   passiveRight?: number;
   imageSream$?: Observable<ImageData>
-  poses$?: Observable<Pose[]>
-  activeIndexes$?: Observable<number[]>
+  activePoses$?: Observable<ActivePoses>
   draw?: DrawViewer
 }
 

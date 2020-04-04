@@ -1,4 +1,5 @@
 import { StreamModule, VideoStreem, ImageStream, PoseNetClass, PoseViewer , ActivePose } from './modules';
+import { ActivePoses } from './modules/touchless.types';
 import { switchMap, map } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { Pose } from '@tensorflow-models/posenet';
@@ -10,7 +11,7 @@ export class TouchlessView extends StreamModule {
   viewer: PoseViewer;
   activePose: ActivePose;
   poses$: Observable<Pose[]>
-  activeIndexes$: Observable<number[]>
+  activePoses$: Observable<ActivePoses>
   
   constructor() {
     super()
@@ -27,15 +28,15 @@ export class TouchlessView extends StreamModule {
     await this.poseNet.create();
     this.imageStream.setConfig({ videoElement: this.videoStream.videoElement })
     this.imageStream.create();
+    this.activePose.create();
 
     this.poses$ = this.imageStream.frames$.pipe(this.poseNet.stream())
-    this.activeIndexes$ = this.poses$.pipe(this.activePose.indexesStream())
+    this.activePoses$ = this.poses$.pipe(this.activePose.stream())
 
     this.viewer.setConfig({ 
       canvasElement: this.imageStream.canvasElement,
       imageSream$: this.imageStream.frames$,
-      poses$: this.poses$,
-      activeIndexes$: this.activeIndexes$
+      activePoses$: this.activePoses$
     })
     this._didMount();
   }
