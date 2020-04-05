@@ -1,4 +1,5 @@
-import { defaultSwipeTrackingConfig, SwipeTrackingConfig, SwipeAccumulator, HandsHistory, PrevPosition } from './config';
+import { defaultSwipeTrackingConfig, defaultAccumulatorConfig, defaultPrev, 
+  SwipeTrackingConfig, Accumulator, HandsHistory, PrevPosition,  } from './config';
 import { Kp, PoseTime } from '../touchless.types';
 import { Helper } from '../helper'
 import { Keypoint } from '@tensorflow-models/posenet';
@@ -13,19 +14,13 @@ export class SwipeTracking extends StreamModule {
   lastTime: number
   relativeSize: number;
   handsHistory: HandsHistory;
-  _swipeAccumulator: SwipeAccumulator
+  _acumulator: Accumulator
 
   constructor(config?: SwipeTrackingConfig) {
     super()
     this.config = { ...defaultSwipeTrackingConfig, ...config }
-    this.prev = {
-      leftWrist: { x: undefined, y: undefined },
-      rightWrist: { x: undefined, y: undefined }
-    }
-    this._swipeAccumulator = {
-      left: { in: [], out: [] },
-      right: { in: [], out: [] }
-    }
+    this.prev = defaultPrev
+    this._clearAccumulator()
   }
 
   public setConfig(config?: SwipeTrackingConfig): void {
@@ -44,32 +39,59 @@ export class SwipeTracking extends StreamModule {
 
   getSwipeData(pose: PoseTime) {
     if (!this.lastTime || pose.time - this.lastTime < 500) {
-      this.relativeSize = this._getPoseRelativeSize(pose.keypoints)
-      this._addToAccumulator(pose.keypoints, 'left', this.relativeSize * 0.1)
-      this._addToAccumulator(pose.keypoints, 'right', this.relativeSize * 0.1)
-      return this._swipeAccumulator.left.in
+      const relativeSize = this._getPoseRelativeSize(pose.keypoints)
+      this._addToAccumulator(pose.keypoints, 'left', relativeSize * 0.1)
+      this._addToAccumulator(pose.keypoints, 'right', relativeSize * 0.1)
+      return {
+        left: this._swipeAccumulator('left', relativeSize),
+        right: this._swipeAccumulator('right', relativeSize)
+      }
     } else {
       this._popAccumulator()
       return null
     }
   }
 
+  private _swipeAccumulator(hand: 'left' | 'right', relativeSize: number) {
+    if (!(hand === 'left' || hand === 'right')) return null
+    const maxSwipe = Math.max(
+      Helper.sumArr(this._acumulator[hand].in),
+      Helper.sumArr(this._acumulator[hand === 'left' ? 'right' : 'left'].out), 
+    )
+    if (maxSwipe) {
+      let result =  maxSwipe / relativeSize
+      if (result >= 1) {
+        result = 1
+        this._clearAccumulator()
+      }
+      return result
+    } else {
+      return 0
+    } 
+  }
 
-  private _popAccumulator(hand?: 'left' | 'right' ) {
+  private _popAccumulator(hand?: 'left' | 'right') {
     if (hand) {
-      this._swipeAccumulator[hand].in.pop()
-      this._swipeAccumulator[hand].out.pop()
+      this._acumulator[hand].in.pop()
+      this._acumulator[hand].out.pop()
     } else {
       this._popAccumulator('left')
       this._popAccumulator('right')
     }
   } 
 
+  private _clearAccumulator(hand?: 'left' | 'right') {
+    if (hand) {
+      this._acumulator[hand] = defaultAccumulatorConfig[hand]
+    } else {
+      this._acumulator = defaultAccumulatorConfig
+    }
+  }
+
   private _addToAccumulator(keypoints: Keypoint[], hand: 'left' | 'right', minMovement: number) {
     if (!(hand === 'left' || hand === 'right')) return null
-    const accumulator = this._swipeAccumulator[hand]
+    const accumulator = this._acumulator[hand]
     if (this.prev[hand + 'Wrist'].x) {
-      //this.relativeSize = this._getPoseRelativeSize(keypoints)
       const swipe = this._swipeDir(keypoints, hand, minMovement)
       if (swipe === null) {
         this._popAccumulator(hand)
@@ -99,7 +121,7 @@ export class SwipeTracking extends StreamModule {
     const swipeSize = this.prev[hand + 'Wrist'].x - wrist.x
     const movement = Math.abs(swipeSize)
     if (movement < minMovement) return null
-    if (swipeSize * sign > 0) { 
+    if (swipeSize * sign >= 0) { 
       dir = 'in'
     } else {
       if (hand ==='left') {

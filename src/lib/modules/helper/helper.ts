@@ -24,4 +24,10 @@ export class Helper {
       y: (keypoints[0].position.y + keypoints[1].position.y) / 2,
     }
   }
+
+  static sumArr(array: number[]) {
+    if (Array.isArray(array) && array.length) {
+      return array.reduce((accumulator, value) => accumulator + value)
+    } else return 0
+  }
 }

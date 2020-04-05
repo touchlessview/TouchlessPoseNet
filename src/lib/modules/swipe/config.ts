@@ -7,11 +7,6 @@ export interface Swipe {
   tap?: number
 } 
 
-export interface SwipeDirAccumulator {
-  in: number[]
-  out: number[]
-}
-
 export interface Point {
   x: number
   y: number
@@ -22,9 +17,14 @@ export interface PrevPosition {
   rightWrist: Vector2D
 }
 
-export interface SwipeAccumulator {
-  left: SwipeDirAccumulator
-  right: SwipeDirAccumulator
+export interface Accumulator {
+  left?: AccumulatorDir
+  right?: AccumulatorDir
+}
+
+export interface AccumulatorDir {
+  in: number[]
+  out: number[]
 }
 
 export interface HandsHistory {
@@ -43,4 +43,15 @@ export const defaultSwipeTrackingConfig: SwipeTrackingConfig = {
   swipeSensitivity: 0.1
   
 };
+
+export const defaultAccumulatorConfig: Accumulator = {
+  left: { in: [], out: [] },
+  right: { in: [], out: [] }
+}
+
+
+export const defaultPrev: PrevPosition = {
+  leftWrist: { x: undefined, y: undefined },
+  rightWrist: { x: undefined, y: undefined }
+}
 
