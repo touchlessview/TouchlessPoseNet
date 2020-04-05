@@ -1,7 +1,7 @@
 import { defaultViewerConfig, ViewerConfig, PointArr } from './config';
 import { StreamModule } from '../streamModule';
 import { ActivePoses } from '../touchless.types';
-import { Keypoint,  getAdjacentKeyPoints } from '@tensorflow-models/posenet';
+import { Keypoint, getAdjacentKeyPoints } from '@tensorflow-models/posenet';
 import { combineLatest } from 'rxjs';
 
 
@@ -11,12 +11,17 @@ export class PoseViewer extends StreamModule {
   config: ViewerConfig;
   canvasElement: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
+  swipe: { left: number, right: number }
 
   constructor(config?: ViewerConfig) {
     super()
     this.config = { ...defaultViewerConfig, ...config };
     this.drawKeypoints = this.drawKeypoints.bind(this);
     this.drawSkeleton = this.drawSkeleton.bind(this);
+    this.swipe = {
+      left: 0,
+      right: 0
+    }
   }
 
   public setConfig(config?: ViewerConfig): void {
@@ -33,21 +38,29 @@ export class PoseViewer extends StreamModule {
       this.context.font = "10px serif";
       document.body.appendChild(this.canvasElement);
       this.viewStream();
+      this.config.swipe$.subscribe(val => {
+        this.swipe.left = val.left
+        this.swipe.right = val.right
+      })
       this._didMount();
     }
   }
 
   private viewStream() {
-    if (this.config.poses$ && this.config.imageSream$) {
+    if (this.config.poses$ && this.config.imageSream$ && this.config.swipe$) {
       let view$ = combineLatest(this.config.imageSream$, this.config.poses$)
       view$.subscribe(data => {
         this.context.putImageData(data[0], 0, 0);
-        let activeIndex = data[1].activeIndex || []
-        data[1].poses.forEach(({ keypoints }, index) => {
-          const isActive = activeIndex.indexOf(index) != -1
-          this.drawKeypoints(keypoints, isActive);
-          this.drawSkeleton(keypoints, isActive);
-        })
+        if (data[1]) {
+          let activeIndex = data[1].activeIndex || []
+          data[1].poses.forEach(({ keypoints }, index) => {
+            const isActive = activeIndex.indexOf(index) != -1
+            this.drawKeypoints(keypoints, isActive);
+            this.drawSkeleton(keypoints, isActive);
+          })
+        }
+        this.drawSwipeProgres(this.swipe.left, 'left', 30)
+        this.drawSwipeProgres(this.swipe.right, 'right', 30)
       })
     }
   }
@@ -61,10 +74,10 @@ export class PoseViewer extends StreamModule {
 
   private drawText(y: number, x: number, score: number, isActive: boolean = false) {
     this.context.beginPath()
-    this.context.fillText('x: ' + x.toFixed(0), x, y - 30,);
-    this.context.fillText('y: ' + y.toFixed(0), x, y - 20,);
-    this.context.fillText('s: ' + score.toFixed(3) , x, y -10,);
-    this.context.fillStyle = this.getColor(isActive)
+    this.context.fillText('x: ' + x.toFixed(0), x, y - 30);
+    this.context.fillText('y: ' + y.toFixed(0), x, y - 20);
+    this.context.fillText('s: ' + score.toFixed(3), x, y - 10);
+    this.context.fillStyle = '#fff'
     this.context.fill();
   }
 
@@ -81,7 +94,7 @@ export class PoseViewer extends StreamModule {
     }
   }
 
-  public drawSegment([ay, ax] : PointArr, [by, bx] : PointArr, isActive: boolean = false) {
+  public drawSegment([ay, ax]: PointArr, [by, bx]: PointArr, isActive: boolean = false) {
     const scale = this.config.draw.scale
     this.context.beginPath();
     this.context.moveTo(ax * scale, ay * scale);
@@ -89,6 +102,27 @@ export class PoseViewer extends StreamModule {
     this.context.lineWidth = this.config.draw.lineWidth;
     this.context.strokeStyle = this.getColor(isActive)
     this.context.stroke();
+  }
+  public drawSwipeProgres(progress: number, dir: 'left' | 'right', lineWidth: number) {
+    progress = progress || 0.01
+    const linePosition = this.config.canvasElement.height - lineWidth / 2
+    const center = this.config.canvasElement.width / 2
+    const progressDist = center * progress
+    const progressFinish = dir === 'left' ? center - progressDist : center + progressDist
+
+    this.context.beginPath()
+    this.context.moveTo(center, linePosition)
+    this.context.lineTo(progressFinish, linePosition)
+    this.context.lineWidth = 30
+    this.context.strokeStyle = "red"
+    this.context.stroke()
+
+    // this.context.beginPath()
+    // this.context.moveTo(center - 5, linePosition)
+    // this.context.lineTo(center + 5, linePosition)
+    // this.context.lineWidth = 30
+    // this.context.strokeStyle = "white"
+    // this.context.stroke()
   }
 
   public getColor(isActive: boolean) {
@@ -104,7 +138,7 @@ export class PoseViewer extends StreamModule {
   public drawSkeleton(keypoints: Keypoint[], isActive: boolean = false) {
     const adjacentKeyPoints = getAdjacentKeyPoints(keypoints, this.config.draw.minScore);
     adjacentKeyPoints.forEach((keypoints) => {
-        this.drawSegment(this.toTuple(keypoints[0].position), this.toTuple(keypoints[1].position), isActive);
+      this.drawSegment(this.toTuple(keypoints[0].position), this.toTuple(keypoints[1].position), isActive);
     });
   }
 

@@ -10,6 +10,11 @@ export interface ActivePoses {
   poses: Pose[]
 }
 
+export interface SwipeData {
+  left?: number;
+  right?: number
+}
+
 export interface PoseTime extends Pose {
   time: number
 }
