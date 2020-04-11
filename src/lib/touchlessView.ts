@@ -8,7 +8,7 @@ export class TouchlessView extends StreamModule {
   videoStream: VideoStreem;
   imageStream: ImageStream;
   poseNet: PoseNetClass;
-  viewer: PoseViewer;
+  //viewer: PoseViewer;
   activePose: ActivePose;
   swipeTracking: SwipeTracking;
   poses$: Observable<ActivePoses>
@@ -21,7 +21,7 @@ export class TouchlessView extends StreamModule {
     this.imageStream = new ImageStream();
     this.poseNet = new PoseNetClass();
     this.activePose = new ActivePose();
-    this.viewer = new PoseViewer();
+    //this.viewer = new PoseViewer();
     this.swipeTracking = new SwipeTracking();
   }
 
@@ -40,20 +40,16 @@ export class TouchlessView extends StreamModule {
     )
 
     this.activePose$ = this.poses$.pipe(
-      filter(data => typeof data.activeIndex[0] === 'number' ), 
-      map(data => { return { ...data.poses[data.activeIndex[0]], time: new Date().getTime() }})
-      )
+      map(data => {
+        if (typeof data.activeIndex[0] === 'number') {
+          return { ...data.poses[data.activeIndex[0]], time: new Date().getTime() }
+        } else return undefined  
+      })
+    )
 
     this.swipeData$ = this.activePose$.pipe(
       this.swipeTracking.operator()
     )
-    
-    this.viewer.setConfig({
-      canvasElement: this.imageStream.canvasElement,
-      imageSream$: this.imageStream.frames$,
-      poses$: this.poses$,
-      swipe$: this.swipeData$
-    })
     this._didMount();
   }
 

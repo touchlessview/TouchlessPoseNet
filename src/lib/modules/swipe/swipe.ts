@@ -5,7 +5,7 @@ import { Helper } from '../helper'
 import { Keypoint } from '@tensorflow-models/posenet';
 import { StreamModule } from '../streamModule';
 import { Observable } from 'rxjs';
-import { map, filter } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 export class SwipeTracking extends StreamModule {
 
@@ -32,23 +32,21 @@ export class SwipeTracking extends StreamModule {
   public operator() {
     return <T>(source: Observable<PoseTime>) => 
     source.pipe(
-      map(pose => this.getSwipeData(pose),
-      filter(swipeData => swipeData !== null)
+      map(pose => this.getSwipeData(pose)
     ))
   }
 
   getSwipeData(pose: PoseTime) {
-    if (!this.lastTime || pose.time - this.lastTime < 500) {
-      const relativeSize = this._getPoseRelativeSize(pose.keypoints)
-      this._addToAccumulator(pose.keypoints, 'left', relativeSize * 0.1)
-      this._addToAccumulator(pose.keypoints, 'right', relativeSize * 0.1)
-      return {
-        left: this._swipeAccumulator('left', relativeSize),
-        right: this._swipeAccumulator('right', relativeSize)
-      }
+    if (pose !== undefined && (!this.lastTime || pose.time - this.lastTime < 500)) {
+      this.relativeSize = this._getPoseRelativeSize(pose.keypoints)
+      this._addToAccumulator(pose.keypoints, 'left', this.relativeSize * 0.1)
+      this._addToAccumulator(pose.keypoints, 'right', this.relativeSize * 0.1)
     } else {
       this._popAccumulator()
-      return null
+    }
+    return {
+      left: this._swipeAccumulator('left', this.relativeSize),
+      right: this._swipeAccumulator('right', this.relativeSize)
     }
   }
 
