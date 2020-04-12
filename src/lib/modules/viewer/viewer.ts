@@ -70,6 +70,7 @@ export class PoseViewer extends StreamModule {
         }
         this.drawSwipeProgress(data[2].left || 0, 'left', 30)
         this.drawSwipeProgress(data[2].right || 0, 'right', 30)
+        this.drawSceneSettings();
       })
     }
   }
@@ -125,6 +126,26 @@ export class PoseViewer extends StreamModule {
     this.context.lineWidth = 30
     this.context.strokeStyle = "red"
     this.context.stroke()
+  }
+
+  public drawSceneSettings() {
+    this.context.beginPath()
+    let scene = this.tv.activePose.config.scene
+    if (scene.passiveLeft) {
+      this.context.rect(0, 0, scene.passiveLeft, scene.height)
+    }
+    if (scene.passiveRight) {
+      this.context.rect(scene.width - scene.passiveRight, 0, scene.passiveRight, scene.height)
+    }
+    this.context.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    this.context.fill();
+
+    this.context.beginPath()
+    this.context.moveTo(scene.center, 0);
+    this.context.lineTo(scene.center, scene.height);
+    this.context.lineWidth = 4;
+    this.context.strokeStyle = 'rgb(0, 200, 83, 0.3)'
+    this.context.stroke();
   }
 
   public getColor(isActive: boolean) {

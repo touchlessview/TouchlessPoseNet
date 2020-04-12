@@ -18,12 +18,9 @@ export interface SceneConfig {
 
 export interface PoseConfig {
   minScore?: number
-  shoulderDist?: ShoulderDist
+  minShoulderDist?: number,
+  maxShoulderDist?: number
 } 
-export interface ShoulderDist {
-  min?: number
-  max?: number 
-}
 
 export interface ActivePosesConfig {
   scene?: SceneConfig
@@ -36,12 +33,13 @@ export const defaultActivePoseConfig: ActivePosesConfig = {
     width: 640,
     height: 480,
     center: 320,
-    passiveLeft: 0,
-    passiveRight: 0
+    passiveLeft: 50,
+    passiveRight: 50,
   },
   pose: {
     minScore: 0.4,
-    shoulderDist: { min: 100 }
+    minShoulderDist: 100,
+    maxShoulderDist: 640
   }
   
 };

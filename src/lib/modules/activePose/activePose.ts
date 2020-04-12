@@ -37,10 +37,12 @@ export class ActivePose extends StreamModule {
     poses.forEach(({ score, keypoints }, index) => {
       const shoulders: [Keypoint, Keypoint] = [keypoints[Kp.leftShoulder], keypoints[Kp.rightShoulder]]
       if (+score >= this.config.pose.minScore && 
-        Helper.getKeypointsDistanse(shoulders) >= this.config.pose.shoulderDist.min
+        Helper.getKeypointsDistanse(shoulders) >= this.config.pose.minShoulderDist
       ) {
         const shoulderCenter = Helper.getKeypointsCenter(shoulders)
         const centerDist = Math.abs(this.config.scene.center - shoulderCenter.x)
+        console.log(this.isInActiveZone(shoulderCenter));
+        
         if (this.isInActiveZone(shoulderCenter) && centerDist < minDist) {
           indexRes = index;
           minDist = centerDist;
@@ -50,7 +52,7 @@ export class ActivePose extends StreamModule {
     return { activeIndex: [indexRes], poses } 
   }
   public isInActiveZone({x}) {
-    return  x >= this.config.scene.passiveLeft ||  
+    return  x >= this.config.scene.passiveLeft &&  
     x <= this.config.scene.width - this.config.scene.passiveRight
   }
 }

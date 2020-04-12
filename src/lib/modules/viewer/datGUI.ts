@@ -81,13 +81,15 @@ export class DatGUI {
     const scene = { ...this.tv.activePose.config.scene }
     const pose = { ...this.tv.activePose.config.pose }
     this.activePose = this.gui.addFolder('ActivePose')
-    this.activePose.add(scene, 'center', 0, scene.width).step(1)
+    this.activePose.add(scene, 'center', 0, scene.width, 1)
       .onChange(() => { update$.next() });
-    this.activePose.add(scene, 'passiveLeft', 0, scene.width).step(1)
+    this.activePose.add(scene, 'passiveLeft', 0, scene.width, 1)
       .onChange(() => { update$.next() });
-    this.activePose.add(pose, 'minScore', 0, scene.width).step(1)
+    this.activePose.add(scene, 'passiveRight', 0, scene.width, 1)
       .onChange(() => { update$.next() });
-    this.poseNet.add(pose.shoulderDist, 'min', 0, scene.width)
+    this.activePose.add(pose, 'minScore', 0, 0.9, 0.01)
+      .onChange(() => { update$.next() });
+    this.activePose.add(pose, 'minShoulderDist', 0, scene.width, 1)
       .onChange(() => { update$.next() });
     update$.subscribe(_ => this.tv.activePose.setConfig({
       scene: { ...scene },
