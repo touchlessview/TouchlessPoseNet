@@ -1,5 +1,6 @@
 import { defaultActivePoseConfig, ActivePoseFilters, ActivePosesConfig, PoseConfig } from './config';
 import { Pose, Keypoint } from '@tensorflow-models/posenet';
+import { Vector2D } from '@tensorflow-models/posenet/dist/types';
 import { StreamModule } from '../streamModule';
 import { Helper } from '../helper'
 import { Kp, ActivePoses } from '../touchless.types';
@@ -8,6 +9,7 @@ import { map } from 'rxjs/operators';
 
 export class ActivePose extends StreamModule {
 
+  shoulderCenter: Vector2D;
   config: ActivePosesConfig;
   getActiveIndex: (poses: Pose[]) => ActivePoses;
 
@@ -32,6 +34,7 @@ export class ActivePose extends StreamModule {
   }
 
   private _getActiveIndex(poses: Pose[]):  ActivePoses {
+    let activeCenter: Vector2D = undefined
     let minDist = this.config.scene.width;
     let indexRes = undefined;
     poses.forEach(({ score, keypoints }, index) => {
@@ -41,15 +44,14 @@ export class ActivePose extends StreamModule {
       ) {
         const shoulderCenter = Helper.getKeypointsCenter(shoulders)
         const centerDist = Math.abs(this.config.scene.center - shoulderCenter.x)
-        console.log(this.isInActiveZone(shoulderCenter));
-        
         if (this.isInActiveZone(shoulderCenter) && centerDist < minDist) {
           indexRes = index;
           minDist = centerDist;
+          activeCenter = { ...shoulderCenter }
         }
       }
     })
-    return { activeIndex: [indexRes], poses } 
+    return { activeIndex: [indexRes], activeCenter: [activeCenter], poses } 
   }
   public isInActiveZone({x}) {
     return  x >= this.config.scene.passiveLeft &&  

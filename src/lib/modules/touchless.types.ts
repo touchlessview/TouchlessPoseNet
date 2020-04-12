@@ -1,4 +1,4 @@
-import { Pose } from "@tensorflow-models/posenet/dist/types";
+import { Pose, Vector2D } from "@tensorflow-models/posenet/dist/types";
 
 export enum TouchlessEventType {
   SlideLeft = 'SlideLeft',
@@ -6,8 +6,9 @@ export enum TouchlessEventType {
 }
 
 export interface ActivePoses {
-  activeIndex: number[],
-  poses: Pose[]
+  activeCenter: Vector2D[];
+  activeIndex: number[];
+  poses: Pose[];
 }
 
 export interface SwipeData {
@@ -15,8 +16,8 @@ export interface SwipeData {
   right?: number
 }
 
-export interface PoseTime extends Pose {
-  time: number
+export interface MainPose extends Pose {
+  activeCenter: Vector2D;
 }
 
 export enum Kp {

@@ -1,5 +1,5 @@
 import { StreamModule, VideoStreem, ImageStream, PoseNetClass, ActivePose, SwipeTracking } from './modules';
-import { ActivePoses, PoseTime, SwipeData } from './modules/touchless.types';
+import { ActivePoses, MainPose, SwipeData } from './modules/touchless.types';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
@@ -10,7 +10,7 @@ export class TouchlessView extends StreamModule {
   activePose: ActivePose;
   swipeTracking: SwipeTracking;
   poses$: Observable<ActivePoses>
-  activePose$: Observable<PoseTime>
+  activePose$: Observable<MainPose>
   swipeData$: Observable<SwipeData>
 
   constructor() {
@@ -38,7 +38,10 @@ export class TouchlessView extends StreamModule {
     this.activePose$ = this.poses$.pipe(
       map(data => {
         if (typeof data.activeIndex[0] === 'number') {
-          return { ...data.poses[data.activeIndex[0]], time: new Date().getTime() }
+          return { 
+            ...data.poses[data.activeIndex[0]], 
+            activeCenter: data.activeCenter[0]
+          }
         } else return undefined  
       })
     )

@@ -1,17 +1,18 @@
 import { defaultSwipeTrackingConfig, defaultAccumulatorConfig, defaultPrev, 
   SwipeTrackingConfig, Accumulator, HandsHistory, PrevPosition,  } from './config';
-import { Kp, PoseTime } from '../touchless.types';
+import { Kp, MainPose } from '../touchless.types';
 import { Helper } from '../helper'
 import { Keypoint } from '@tensorflow-models/posenet';
 import { StreamModule } from '../streamModule';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Vector2D } from '@tensorflow-models/posenet/dist/types';
 
 export class SwipeTracking extends StreamModule {
 
   config: SwipeTrackingConfig;
   prev: PrevPosition;
-  lastTime: number
+  activeCenter: Vector2D;
   relativeSize: number;
   handsHistory: HandsHistory;
   _acumulator: Accumulator
@@ -21,6 +22,7 @@ export class SwipeTracking extends StreamModule {
     this.config = { ...defaultSwipeTrackingConfig, ...config }
     this.prev = defaultPrev
     this._clearAccumulator()
+    this.relativeSize = 10
   }
 
   public setConfig(config?: SwipeTrackingConfig): void {
@@ -30,14 +32,19 @@ export class SwipeTracking extends StreamModule {
   public async create() {}
 
   public operator() {
-    return <T>(source: Observable<PoseTime>) => 
+    return <T>(source: Observable<MainPose>) => 
     source.pipe(
       map(pose => this.getSwipeData(pose)
     ))
   }
 
-  getSwipeData(pose: PoseTime) {
-    if (pose !== undefined && (!this.lastTime || pose.time - this.lastTime < 500)) {
+  getSwipeData(pose: MainPose) {
+    if (
+      pose !== undefined && 
+      this.activeCenter === undefined ||
+      Math.abs(this.activeCenter.x - pose.activeCenter.x) < this.relativeSize / 2
+      ) {
+      this.activeCenter = pose.activeCenter;
       this.relativeSize = this._getPoseRelativeSize(pose.keypoints)
       this._addToAccumulator(pose.keypoints, 'left', this.relativeSize * 0.1)
       this._addToAccumulator(pose.keypoints, 'right', this.relativeSize * 0.1)
