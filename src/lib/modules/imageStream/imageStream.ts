@@ -50,7 +50,7 @@ export class ImageStream extends StreamModule {
   }
 
   private _stream(): void {
-    const timeInterval = this.config.frameRate * 10;
+    const timeInterval = 1000 / this.config.frameRate;
     const width = this.canvasElement.width;
     const height = this.canvasElement.height;
     if (this.config.rotate !== 0) {
