@@ -24,10 +24,12 @@ export class VideoStreem extends StreamModule {
     this.videoElement = document.createElement('video');
     this.videoElement.width = this.config.width;
     this.videoElement.height = this.config.height;
+    this.videoElement.crossOrigin = 'anonymous'
     this.videoElement.autoplay = this.config.autoplay;
-    if (this.config.containerId) {
-      const container = document.getElementById(this.config.containerId)
-      if (container) container.appendChild(this.videoElement);
+    if (this.config.containerSelector) {
+      this.videoElement.controls = true;
+      const containers = document.querySelectorAll(this.config.containerSelector)
+      if (containers && containers.length) containers[0].appendChild(this.videoElement);
     }
     await this.play();
     this._didMount();

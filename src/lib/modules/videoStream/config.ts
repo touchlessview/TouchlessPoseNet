@@ -15,7 +15,7 @@ export interface Constraints {
 }
 
 export interface Config {
-  containerId?: string;
+  containerSelector?: string;
   id?: string;
   className?: string;
   hidden?: boolean;
