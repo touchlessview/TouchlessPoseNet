@@ -24,6 +24,10 @@ export class PoseViewer extends StreamModule {
 
   public setConfig(config?: ViewerConfig): void {
     this.config = { ...this.config, ...config }
+    if (this.isMounted) {
+      this.remove();
+      this.create();
+    }
   }
 
   public create(): void {
@@ -38,6 +42,13 @@ export class PoseViewer extends StreamModule {
       this.viewStream();
       this._didMount();
     }
+  }
+
+  public remove(): void {
+    this._isMounted = false;
+    this.canvasElement.remove()
+    this.canvasElement = undefined
+    this.context = undefined
   }
 
   private viewStream() {
@@ -132,6 +143,4 @@ export class PoseViewer extends StreamModule {
       this.drawSegment(this.toTuple(keypoints[0].position), this.toTuple(keypoints[1].position), isActive);
     });
   }
-
-
 }

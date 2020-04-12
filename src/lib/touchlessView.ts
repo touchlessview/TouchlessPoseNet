@@ -1,14 +1,12 @@
-import { StreamModule, VideoStreem, ImageStream, PoseNetClass, PoseViewer, ActivePose, SwipeTracking } from './modules';
+import { StreamModule, VideoStreem, ImageStream, PoseNetClass, ActivePose, SwipeTracking } from './modules';
 import { ActivePoses, PoseTime, SwipeData } from './modules/touchless.types';
-import { map, filter } from 'rxjs/operators';
-import { Pose } from '@tensorflow-models/posenet';
-import { ReplaySubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 export class TouchlessView extends StreamModule {
   videoStream: VideoStreem;
   imageStream: ImageStream;
   poseNet: PoseNetClass;
-  //viewer: PoseViewer;
   activePose: ActivePose;
   swipeTracking: SwipeTracking;
   poses$: Observable<ActivePoses>
@@ -21,7 +19,6 @@ export class TouchlessView extends StreamModule {
     this.imageStream = new ImageStream();
     this.poseNet = new PoseNetClass();
     this.activePose = new ActivePose();
-    //this.viewer = new PoseViewer();
     this.swipeTracking = new SwipeTracking();
   }
 
@@ -33,7 +30,6 @@ export class TouchlessView extends StreamModule {
     this.imageStream.create();
     this.activePose.create();
     this.swipeTracking.create();
-
     this.poses$ = this.imageStream.frames$.pipe(
       this.poseNet.operator(),
       this.activePose.operator()
@@ -46,17 +42,11 @@ export class TouchlessView extends StreamModule {
         } else return undefined  
       })
     )
-
     this.swipeData$ = this.activePose$.pipe(
       this.swipeTracking.operator()
     )
     this._didMount();
   }
-
   public setConfig() {
-
   }
-
-
-
 }

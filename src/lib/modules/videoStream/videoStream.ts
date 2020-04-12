@@ -13,6 +13,10 @@ export class VideoStreem extends StreamModule {
 
   public setConfig(config?: Config): void {
     this.config = {...this.config, ...config};
+    if (this.isMounted) {
+      this.remove();
+      this.create();
+    }
   }
 
   public async create() {
@@ -28,6 +32,12 @@ export class VideoStreem extends StreamModule {
     await this.play();
     this._didMount();
     console.log('Video created')
+  }
+
+  public remove(): void {
+    this.videoElement.src = '';
+    this.videoElement.remove;
+    this.videoElement = undefined;
   }
 
   public async play() {

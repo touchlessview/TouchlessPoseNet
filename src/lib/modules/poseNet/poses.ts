@@ -31,6 +31,10 @@ export class PoseNetClass extends StreamModule {
       ...this.inferenceConfig,
       ...(config && config.inferenceConfig ? config.inferenceConfig : {})
     };
+    if (this.isMounted) {
+      this.remove();
+      this.create();
+    }
   }
 
   public async create() { 
@@ -43,9 +47,14 @@ export class PoseNetClass extends StreamModule {
     }
   }
 
+  public remove(): void {
+    this.net = undefined;
+    this._isMounted = false;
+  }
+
   public operator() {
-    return <T>(source: Observable<ImageData>) => 
-    source.pipe(switchMap(image => from(this._estimatePoses(image))))
+    return (source: Observable<ImageData>) => 
+    source.pipe(switchMap(image => from(this.asyncEstimatePoses(image))))
   }
 
   public async asyncEstimatePoses(imageData: ImageData) {
@@ -60,7 +69,7 @@ export class PoseNetClass extends StreamModule {
     if (this._isMounted) {
       return this.net.estimateMultiplePoses(imageData, this.inferenceConfig);
     } else {
-      return Promise.resolve([])
+      return []
     }
   } 
 }
