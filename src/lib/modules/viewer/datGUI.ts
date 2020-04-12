@@ -42,6 +42,7 @@ export class DatGUI {
     ).subscribe(_ => {
       config.rotate = +config.rotate as 0 | 90 | -90
       config.frameRate = +config.frameRate
+      this.tv.imageStream.setConfig(config);
       this.viewer ? this.viewer.setConfig() : console.log('PoseViewer is undefined');
     })
   }
