@@ -2,8 +2,7 @@ import { defaultModelConfig, defaultInferenceConfig, PoseNetConfig, } from './co
 import { load, ModelConfig, MultiPersonInferenceConfig, PoseNet, Pose } from '@tensorflow-models/posenet';
 import { StreamModule } from '../streamModule';
 import { Observable, from } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-
+import { switchMap, share } from 'rxjs/operators';
 export class PoseNetClass extends StreamModule {
 
   net: PoseNet;
@@ -54,7 +53,10 @@ export class PoseNetClass extends StreamModule {
 
   public operator() {
     return (source: Observable<ImageData>) => 
-    source.pipe(switchMap(image => from(this.asyncEstimatePoses(image))))
+    source.pipe(
+      switchMap(image => from(this._estimatePoses(image))),
+      share()
+      )
   }
 
   public async asyncEstimatePoses(imageData: ImageData) {
