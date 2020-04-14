@@ -1,6 +1,6 @@
 import { StreamModule, VideoStreem, ImageStream, PoseNetClass, SwipeTracking, SortPoses } from './modules';
 import { SwipeData, SortedPoses, ActivePose } from './modules/touchless.types';
-import { map } from 'rxjs/operators';
+import { map, share } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 export class TouchlessView extends StreamModule {
@@ -33,15 +33,18 @@ export class TouchlessView extends StreamModule {
     
     this.poses$ = this.imageStream.frames$.pipe(
       this.poseNet.operator(),
-      this.sortPoses.operator()
+      this.sortPoses.operator(),
+      share()
     )
 
     this.activePose$ = this.poses$.pipe(
-      map(data => data.activePoses[0])
+      map(data => data.activePoses[0]),
+      share()
     )
 
     this.swipeData$ = this.activePose$.pipe(
-      this.swipeTracking.operator()
+      this.swipeTracking.operator(),
+      share()
     )
 
     this._didMount();
