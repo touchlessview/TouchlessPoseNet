@@ -1,4 +1,4 @@
-import { ModelConfig, PoseNetOutputStride } from '@tensorflow-models/posenet';
+import { PoseNetOutputStride } from '@tensorflow-models/posenet';
 import { GUI } from 'dat.gui';
 import { PoseViewer } from './viewer';
 import { TouchlessView } from '../../touchlessView'
@@ -11,7 +11,7 @@ export class DatGUI {
   gui: any
   videoStream: any
   poseNet: any
-  activePose: any
+  sortPoses: any
   posesDetections: any
   swipe: any
 
@@ -25,7 +25,7 @@ export class DatGUI {
     this.posesDetections = this.gui.addFolder('Poses detection')
     this._addVideoStream()
     this._addPoseNet()
-    this._addActivePose()
+    this._addSortPoses()
     this._addSwipe()
   }
 
@@ -34,9 +34,10 @@ export class DatGUI {
     const update$ = new Subject()
     this.videoStream = this.posesDetections.addFolder('Image Strean')
     this.videoStream.add(config, 'rotate', [-90, 0, 90])
-      .onChange(() => { update$.next() })
     this.videoStream.add(config, 'frameRate', this._getSelectArr(6, 30, 2))
-      .onChange(() => { update$.next() })
+    this.videoStream.__controllers.forEach(controller => {
+      controller.onChange(() => { update$.next() });
+    });
     update$.pipe(
       delay(1000)
     ).subscribe(_ => {
@@ -53,17 +54,14 @@ export class DatGUI {
     const inferenceConfig = { ...this.tv.poseNet.inferenceConfig }
     this.poseNet = this.posesDetections.addFolder('PoseNet')
     this.poseNet.add(modelConfig, 'architecture', ['MobileNetV1', 'ResNet50'])
-      .onChange(() => { update$.next() });
     this.poseNet.add(modelConfig, 'outputStride', this._getSelectArr(8, 32, 8))
-      .onChange(() => { update$.next() });
     this.poseNet.add(modelConfig, 'inputResolution', this._getSelectArr(200, 800, 50))
-      .onChange(() => { update$.next() });
     this.poseNet.add(inferenceConfig, 'maxDetections', 1, 20, 1)
-      .onChange(() => { update$.next() });
     this.poseNet.add(inferenceConfig, 'scoreThreshold', 0.1, 0.9, 0.01)
-      .onChange(() => { update$.next() });
     this.poseNet.add(inferenceConfig, 'nmsRadius', 0, 40, 1)
-      .onChange(() => { update$.next() });
+    this.poseNet.__controllers.forEach(controller => {
+      controller.onChange(() => { update$.next() });
+    });
     update$.pipe(
       delay(1000)
     ).subscribe(_ => {
@@ -77,22 +75,20 @@ export class DatGUI {
     })
   }
 
-  private _addActivePose() {
+  private _addSortPoses() {
     const update$ = new Subject()
-    const scene = { ...this.tv.activePose.config.scene }
-    const pose = { ...this.tv.activePose.config.pose }
-    this.activePose = this.gui.addFolder('ActivePose')
-    this.activePose.add(scene, 'center', 0, scene.width, 1)
-      .onChange(() => { update$.next() });
-    this.activePose.add(scene, 'passiveLeft', 0, scene.width, 1)
-      .onChange(() => { update$.next() });
-    this.activePose.add(scene, 'passiveRight', 0, scene.width, 1)
-      .onChange(() => { update$.next() });
-    this.activePose.add(pose, 'minScore', 0, 0.9, 0.01)
-      .onChange(() => { update$.next() });
-    this.activePose.add(pose, 'minShoulderDist', 0, scene.width, 1)
-      .onChange(() => { update$.next() });
-    update$.subscribe(_ => this.tv.activePose.setConfig({
+    const scene = { ...this.tv.sortPoses.config.scene }
+    const pose = { ...this.tv.sortPoses.config.pose }
+    this.sortPoses = this.gui.addFolder('ActivePose')
+    this.sortPoses.add(scene, 'center', 0, scene.width, 1)
+    this.sortPoses.add(scene, 'passiveLeft', 0, scene.width, 1)
+    this.sortPoses.add(scene, 'passiveRight', 0, scene.width, 1)
+    this.sortPoses.add(pose, 'minScore', 0, 0.9, 0.01)
+    this.sortPoses.add(pose, 'minShoulderDist', 0, scene.width, 1)
+    this.sortPoses.__controllers.forEach(controller => {
+      controller.onChange(() => { update$.next() });
+    });
+    update$.subscribe(_ => this.tv.sortPoses.setConfig({
       scene: { ...scene },
       pose: { ...pose }
     }))

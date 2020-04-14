@@ -3,6 +3,8 @@ import { StreamModule } from '../streamModule';
 import { TouchlessView } from '../../touchlessView'
 import { Keypoint, getAdjacentKeyPoints } from '@tensorflow-models/posenet';
 import { combineLatest } from 'rxjs';
+import { Helper } from '../helper';
+import { ActiveKeypoint } from '../touchless.types';
 
 export class PoseViewer extends StreamModule {
 
@@ -12,6 +14,7 @@ export class PoseViewer extends StreamModule {
   canvasElement: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
   swipe: { left: number, right: number }
+  isActiveKeypoint: any
 
   constructor(tv: TouchlessView, config?: ViewerConfig) {
     super()
@@ -61,11 +64,9 @@ export class PoseViewer extends StreamModule {
       view$.subscribe(data => {
         this.context.putImageData(data[0], 0, 0);
         if (data[1]) {
-          let activeIndex = data[1].activeIndex || []
-          data[1].poses.forEach(({ keypoints }, index) => {
-            const isActive = activeIndex.indexOf(index) != -1
-            this.drawKeypoints(keypoints, isActive);
-            this.drawSkeleton(keypoints, isActive);
+          data[1].passivePoses.forEach(({ keypoints }) => {
+            this.drawKeypoints(keypoints, false);
+            this.drawSkeleton(keypoints, false);
           })
         }
         this.drawSwipeProgress(data[2].left || 0, 'left', 30)
@@ -82,7 +83,7 @@ export class PoseViewer extends StreamModule {
     this.context.fill();
   }
 
-  private drawText(y: number, x: number, score: number, isActive: boolean = false) {
+  private drawText(y: number, x: number, score: number) {
     this.context.beginPath()
     this.context.fillText('x: ' + x.toFixed(0), x, y - 30);
     this.context.fillText('y: ' + y.toFixed(0), x, y - 20);
@@ -91,17 +92,24 @@ export class PoseViewer extends StreamModule {
     this.context.fill();
   }
 
-  public drawKeypoints(keypoints: Keypoint[], isActive: boolean = false) {
+  public drawKeypoints(keypoints: ActiveKeypoint[], isActive: boolean = false) {
     const scale = this.config.scale
-    for (let i = 0; i < keypoints.length; i++) {
-      const keypoint = keypoints[i];
-      if (keypoint.score < this.config.minScore) {
-        continue;
-      }
-      const { y, x } = keypoint.position;
-      this.drawPoint(+y * scale, +x * scale, isActive);
-      this.drawText(+y * scale, +x * scale, keypoint.score, isActive)
-    }
+    keypoints.forEach(keypoint => {
+      isActive = keypoint.isActive !== undefined ? keypoint.isActive : isActive
+      this.drawPoint(+keypoint.position.y * scale, +keypoint.position.x * scale, isActive);
+      this.drawText(+keypoint.position.y * scale, +keypoint.position.x * scale, keypoint.score)
+    });
+  }
+
+  public drawSkeleton(keypoints: ActiveKeypoint[], isActive: boolean = false) {
+    const adjacentKeyPoints = getAdjacentKeyPoints(keypoints, this.config.minScore);
+    adjacentKeyPoints.forEach((keypoints) => {
+      this.drawSegment(
+        this.toTuple(keypoints[0].position), 
+        this.toTuple(keypoints[1].position), 
+        isActive
+        );
+    });
   }
 
   public drawSegment([ay, ax]: PointArr, [by, bx]: PointArr, isActive: boolean = false) {
@@ -113,13 +121,13 @@ export class PoseViewer extends StreamModule {
     this.context.strokeStyle = this.getColor(isActive)
     this.context.stroke();
   }
+
   public drawSwipeProgress(progress: number, dir: 'left' | 'right', lineWidth: number) {
     progress = progress || 0.01
     const linePosition = this.canvasElement.height - lineWidth / 2
     const center = this.canvasElement.width / 2
     const progressDist = center * progress
     const progressFinish = dir === 'left' ? center - progressDist : center + progressDist
-
     this.context.beginPath()
     this.context.moveTo(center, linePosition)
     this.context.lineTo(progressFinish, linePosition)
@@ -130,7 +138,7 @@ export class PoseViewer extends StreamModule {
 
   public drawSceneSettings() {
     this.context.beginPath()
-    let scene = this.tv.activePose.config.scene
+    let scene = this.tv.sortPoses.config.scene
     if (scene.passiveLeft) {
       this.context.rect(0, 0, scene.passiveLeft, scene.height)
     }
@@ -156,12 +164,5 @@ export class PoseViewer extends StreamModule {
 
   public toTuple({ y, x }) {
     return [y, x];
-  }
-
-  public drawSkeleton(keypoints: Keypoint[], isActive: boolean = false) {
-    const adjacentKeyPoints = getAdjacentKeyPoints(keypoints, this.config.minScore);
-    adjacentKeyPoints.forEach((keypoints) => {
-      this.drawSegment(this.toTuple(keypoints[0].position), this.toTuple(keypoints[1].position), isActive);
-    });
   }
 }

@@ -1,6 +1,3 @@
-import { Observable } from "rxjs";
-import { ActivePoses, SwipeData } from '../touchless.types';
-import { Pose } from '@tensorflow-models/posenet';
 
 export type PointArr = [number, number] | any[]
 

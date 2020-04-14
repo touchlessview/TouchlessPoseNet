@@ -1,23 +1,27 @@
-import { Pose, Vector2D } from "@tensorflow-models/posenet/dist/types";
+import { Pose, Vector2D, Keypoint } from "@tensorflow-models/posenet/dist/types";
 
 export enum TouchlessEventType {
   SlideLeft = 'SlideLeft',
   SlideRight = 'SlideRight'
 }
 
-export interface ActivePoses {
-  activeCenter: Vector2D[];
-  activeIndex: number[];
-  poses: Pose[];
+export interface SortedPoses {
+  passivePoses: Pose[]
+  activePoses: ActivePose[];
 }
 
 export interface SwipeData {
   left?: number;
   right?: number
 }
+export interface ActiveKeypoint extends Keypoint {
+  isActive?: boolean
+}
 
-export interface MainPose extends Pose {
-  activeCenter: Vector2D;
+export interface ActivePose  {
+  keypoints: ActiveKeypoint[];
+  score: number;
+  center: Vector2D
 }
 
 export enum Kp {

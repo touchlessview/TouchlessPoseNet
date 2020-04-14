@@ -1,5 +1,5 @@
-import { StreamModule, VideoStreem, ImageStream, PoseNetClass, ActivePose, SwipeTracking } from './modules';
-import { ActivePoses, MainPose, SwipeData } from './modules/touchless.types';
+import { StreamModule, VideoStreem, ImageStream, PoseNetClass, SwipeTracking, SortPoses } from './modules';
+import { SwipeData, SortedPoses, ActivePose } from './modules/touchless.types';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
@@ -7,10 +7,10 @@ export class TouchlessView extends StreamModule {
   videoStream: VideoStreem;
   imageStream: ImageStream;
   poseNet: PoseNetClass;
-  activePose: ActivePose;
+  sortPoses: SortPoses;
   swipeTracking: SwipeTracking;
-  poses$: Observable<ActivePoses>
-  activePose$: Observable<MainPose>
+  poses$: Observable<SortedPoses>
+  activePose$: Observable<ActivePose>
   swipeData$: Observable<SwipeData>
 
   constructor() {
@@ -18,7 +18,7 @@ export class TouchlessView extends StreamModule {
     this.videoStream = new VideoStreem();
     this.imageStream = new ImageStream();
     this.poseNet = new PoseNetClass();
-    this.activePose = new ActivePose();
+    this.sortPoses = new SortPoses();
     this.swipeTracking = new SwipeTracking();
   }
 
@@ -28,26 +28,22 @@ export class TouchlessView extends StreamModule {
     await this.poseNet.create();
     this.imageStream.setConfig({ videoElement: this.videoStream.videoElement })
     this.imageStream.create();
-    this.activePose.create();
+    this.sortPoses.create();
     this.swipeTracking.create();
+    
     this.poses$ = this.imageStream.frames$.pipe(
       this.poseNet.operator(),
-      this.activePose.operator()
+      this.sortPoses.operator()
     )
 
     this.activePose$ = this.poses$.pipe(
-      map(data => {
-        if (typeof data.activeIndex[0] === 'number') {
-          return { 
-            ...data.poses[data.activeIndex[0]], 
-            activeCenter: data.activeCenter[0]
-          }
-        } else return undefined  
-      })
+      map(data => data.activePoses[0])
     )
+
     this.swipeData$ = this.activePose$.pipe(
       this.swipeTracking.operator()
     )
+
     this._didMount();
   }
   public setConfig() {

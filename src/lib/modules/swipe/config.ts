@@ -34,14 +34,11 @@ export interface HandsHistory {
 
 export interface SwipeTrackingConfig {
   historyLength?: number
-  passiveTop?: number
-  passiveBottom?: number
   swipeSensitivity?: number 
 }
 
 export const defaultSwipeTrackingConfig: SwipeTrackingConfig = {
   swipeSensitivity: 0.1
-  
 };
 
 export const defaultAccumulatorConfig: Accumulator = {

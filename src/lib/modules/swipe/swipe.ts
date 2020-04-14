@@ -1,12 +1,13 @@
-import { defaultSwipeTrackingConfig, defaultAccumulatorConfig, defaultPrev, 
-  SwipeTrackingConfig, Accumulator, HandsHistory, PrevPosition,  } from './config';
-import { Kp, MainPose } from '../touchless.types';
+import {
+  defaultSwipeTrackingConfig, defaultAccumulatorConfig, defaultPrev,
+  SwipeTrackingConfig, Accumulator, HandsHistory, PrevPosition,
+} from './config';
+import { Kp, ActivePose, ActiveKeypoint } from '../touchless.types';
 import { Helper } from '../helper'
-import { Keypoint } from '@tensorflow-models/posenet';
 import { StreamModule } from '../streamModule';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Vector2D } from '@tensorflow-models/posenet/dist/types';
+import { Vector2D, Keypoint } from '@tensorflow-models/posenet/dist/types';
 
 export class SwipeTracking extends StreamModule {
 
@@ -23,28 +24,28 @@ export class SwipeTracking extends StreamModule {
     this.prev = defaultPrev
     this._clearAccumulator()
     this.relativeSize = 10
+    this.activeCenter = { x: 0, y: 0 }
   }
 
   public setConfig(config?: SwipeTrackingConfig): void {
     this.config = { ...this.config, ...config }
   }
 
-  public async create() {}
+  public async create() { }
 
   public operator() {
-    return <T>(source: Observable<MainPose>) => 
-    source.pipe(
-      map(pose => this.getSwipeData(pose)
-    ))
+    return (source: Observable<ActivePose>) =>
+      source.pipe(
+        map(pose => this.getSwipeData(pose)
+        ))
   }
 
-  getSwipeData(pose: MainPose) {
+  getSwipeData(pose: ActivePose) {
     if (
-      pose !== undefined && 
-      this.activeCenter === undefined ||
-      Math.abs(this.activeCenter.x - pose.activeCenter.x) < this.relativeSize / 2
-      ) {
-      this.activeCenter = pose.activeCenter;
+      pose !== undefined &&
+      Math.abs(this.activeCenter.x - pose.center.x) < this.relativeSize / 2
+    ) {
+      this.activeCenter = { ...pose.center };
       this.relativeSize = this._getPoseRelativeSize(pose.keypoints)
       this._addToAccumulator(pose.keypoints, 'left', this.relativeSize * 0.1)
       this._addToAccumulator(pose.keypoints, 'right', this.relativeSize * 0.1)
@@ -61,10 +62,10 @@ export class SwipeTracking extends StreamModule {
     if (!(hand === 'left' || hand === 'right')) return null
     const maxSwipe = Math.max(
       Helper.sumArr(this._acumulator[hand].in),
-      Helper.sumArr(this._acumulator[hand === 'left' ? 'right' : 'left'].out), 
+      Helper.sumArr(this._acumulator[hand === 'left' ? 'right' : 'left'].out),
     )
     if (maxSwipe) {
-      let result =  maxSwipe / relativeSize
+      let result = maxSwipe / relativeSize
       if (result >= 1) {
         result = 1
         this._clearAccumulator()
@@ -72,7 +73,7 @@ export class SwipeTracking extends StreamModule {
       return result
     } else {
       return 0
-    } 
+    }
   }
 
   private _popAccumulator(hand?: 'left' | 'right') {
@@ -83,7 +84,7 @@ export class SwipeTracking extends StreamModule {
       this._popAccumulator('left')
       this._popAccumulator('right')
     }
-  } 
+  }
 
   private _clearAccumulator(hand?: 'left' | 'right') {
     if (hand) {
@@ -93,7 +94,7 @@ export class SwipeTracking extends StreamModule {
     }
   }
 
-  private _addToAccumulator(keypoints: Keypoint[], hand: 'left' | 'right', minMovement: number) {
+  private _addToAccumulator(keypoints: ActiveKeypoint[], hand: 'left' | 'right', minMovement: number) {
     if (!(hand === 'left' || hand === 'right')) return null
     const accumulator = this._acumulator[hand]
     if (this.prev[hand + 'Wrist'].x) {
@@ -106,30 +107,35 @@ export class SwipeTracking extends StreamModule {
         if (accumulator[swipe.dir].length > 9) accumulator[swipe.dir].pop()
       }
     }
-    this.prev[hand + 'Wrist'] = { ...keypoints[Kp[hand + 'Wrist']].position } 
+    this.prev[hand + 'Wrist'] = { ...keypoints[Kp[hand + 'Wrist']].position }
   }
 
-  private _getPoseRelativeSize(keypoints: Keypoint[]) {
+  private _getPoseRelativeSize(keypoints: ActiveKeypoint[]) {
     return Math.max(
-      Helper.getKeypointsDistanse([keypoints[Kp.leftShoulder],keypoints[Kp.leftElbow]]),
-      Helper.getKeypointsDistanse([keypoints[Kp.rightShoulder],keypoints[Kp.rightElbow]]),
-      Helper.getKeypointsDistanse([keypoints[Kp.leftShoulder],keypoints[Kp.rightShoulder]]),
-      )
+      Helper.getKeypointsDistanse([keypoints[Kp.leftShoulder], keypoints[Kp.leftElbow]]),
+      Helper.getKeypointsDistanse([keypoints[Kp.rightShoulder], keypoints[Kp.rightElbow]]),
+      Helper.getKeypointsDistanse([keypoints[Kp.leftShoulder], keypoints[Kp.rightShoulder]]),
+    )
   }
 
-  private _swipeDir(keypoints: Keypoint[], hand: 'left' | 'right', minMovement: number) {
-    if (!(hand === 'left' || hand === 'right')) return null
+  private _swipeDir(keypoints: ActiveKeypoint[], hand: 'left' | 'right', minMovement: number) {
+    if (
+      !(hand === 'left' || hand === 'right') ||
+      !keypoints[Kp[hand + 'Wrist']].isActive
+    ) return null
+
     let dir = ''
     const sign = hand === 'left' ? 1 : -1
     const shoulder = keypoints[Kp[hand + 'Shoulder']].position
-    const wrist = keypoints[Kp[hand + 'Wrist']].position  
+    const wrist = keypoints[Kp[hand + 'Wrist']].position
     const swipeSize = this.prev[hand + 'Wrist'].x - wrist.x
     const movement = Math.abs(swipeSize)
-    if (movement < minMovement) return null
-    if (swipeSize * sign >= 0) { 
+    const isActive = true
+    if (!isActive && movement < minMovement) return null
+    if (swipeSize * sign >= 0) {
       dir = 'in'
     } else {
-      if (hand ==='left') {
+      if (hand === 'left') {
         if (shoulder.x + minMovement < wrist.x) {
           dir = 'out'
         } else return null

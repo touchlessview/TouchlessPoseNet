@@ -1,13 +1,3 @@
-import { Pose } from '@tensorflow-models/posenet';
-
-export type FilterFunction = (poses: Pose[], config: ActivePosesConfig) => Pose[];
-
-export interface ActivePoseFilters {
-  before?: FilterFunction;
-  after?: FilterFunction;
-  main?: FilterFunction;
-}
-
 export interface SceneConfig {
   width?: number
   height?: number
@@ -19,16 +9,18 @@ export interface SceneConfig {
 export interface PoseConfig {
   minScore?: number
   minShoulderDist?: number,
-  maxShoulderDist?: number
+  maxShoulderDist?: number,
+  relativePassiveTop?: number
+  relativePassiveBottom?: number
 } 
 
-export interface ActivePosesConfig {
+export interface SortPosesConfig {
   scene?: SceneConfig
   pose?: PoseConfig
   custom?: any
 }
 
-export const defaultActivePoseConfig: ActivePosesConfig = {
+export const defaultSortPosesConfig: SortPosesConfig = {
   scene: {
     width: 640,
     height: 480,
@@ -39,7 +31,9 @@ export const defaultActivePoseConfig: ActivePosesConfig = {
   pose: {
     minScore: 0.4,
     minShoulderDist: 100,
-    maxShoulderDist: 640
+    maxShoulderDist: 640,
+    relativePassiveTop: 0,
+    relativePassiveBottom: 400
   }
   
 };
