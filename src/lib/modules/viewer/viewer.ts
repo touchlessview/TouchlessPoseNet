@@ -1,9 +1,8 @@
 import { defaultViewerConfig, ViewerConfig, PointArr } from './config';
 import { StreamModule } from '../streamModule';
 import { TouchlessView } from '../../touchlessView'
-import { Keypoint, getAdjacentKeyPoints } from '@tensorflow-models/posenet';
+import { getAdjacentKeyPoints } from '@tensorflow-models/posenet';
 import { combineLatest } from 'rxjs';
-import { Helper } from '../helper';
 import { ActiveKeypoint } from '../touchless.types';
 
 export class PoseViewer extends StreamModule {
@@ -67,6 +66,10 @@ export class PoseViewer extends StreamModule {
           data[1].passivePoses.forEach(({ keypoints }) => {
             this.drawKeypoints(keypoints, false);
             this.drawSkeleton(keypoints, false);
+          })
+          data[1].activePoses.forEach(({ keypoints }) => {
+            this.drawKeypoints(keypoints, true);
+            this.drawSkeleton(keypoints, true);
           })
         }
         this.drawSwipeProgress(data[2].left || 0, 'left', 30)
