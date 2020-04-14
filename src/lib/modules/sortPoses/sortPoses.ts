@@ -28,18 +28,19 @@ export class SortPoses extends StreamModule {
   }
 
   public operator() {
-    return (source: Observable<Pose[]>) => 
-    source.pipe(map(poses => this.getSortedPoses(poses)))
+    return (source: Observable<Pose[]>) =>
+      source.pipe(map(poses => this.getSortedPoses(poses)))
   }
 
-  private _getSortedPoses(poses: Pose[]):  SortedPoses {
+  private _getSortedPoses(poses: Pose[]): SortedPoses {
     let activeCenter: Vector2D = undefined
-    let activePose: ActivePose = undefined 
+    let activePose: ActivePose = undefined
     let minDist = this.config.scene.width;
     let indexRes = undefined;
     poses.forEach(({ score, keypoints }, index) => {
       const shoulders: [Keypoint, Keypoint] = [keypoints[Kp.leftShoulder], keypoints[Kp.rightShoulder]]
-      if (+score >= this.config.pose.minScore && 
+      if (
+        +score >= this.config.pose.minScore &&
         Helper.getKeypointsDistanse(shoulders) >= this.config.pose.minShoulderDist
       ) {
         const shoulderCenter = Helper.getKeypointsCenter(shoulders)
@@ -55,26 +56,30 @@ export class SortPoses extends StreamModule {
       activePose = {
         center: activeCenter,
         score: poses[indexRes].score,
-        keypoints: this._getActiveKeypoints(poses[indexRes].keypoints) 
-      } 
+        keypoints: this._getActiveKeypoints(poses[indexRes].keypoints)
+      }
+      poses.splice(indexRes, 1);
     }
-    return { activePoses: [activePose], passivePoses: poses.splice(indexRes, 1) } 
+    return {
+      activePoses: activePose !== undefined ? [activePose] : [],
+      passivePoses: poses
+    }
   }
 
   private _getActiveKeypoints(keypoints): ActiveKeypoint[] {
     return keypoints.map(keypoint => {
       const isActive = Helper.isActiveKeypoint(
-        keypoint, 
+        keypoint,
         this.config.pose.relativePassiveTop,
         this.config.pose.relativePassiveBottom,
         'y', this.config.pose.minScore
-        )
-      return { ...keypoint,  isActive}
+      )
+      return { ...keypoint, isActive }
     })
   }
 
-  public isInActiveZone({x}) {
-    return  x >= this.config.scene.passiveLeft &&  
-    x <= this.config.scene.width - this.config.scene.passiveRight
+  public isInActiveZone({ x }) {
+    return x >= this.config.scene.passiveLeft &&
+      x <= this.config.scene.width - this.config.scene.passiveRight
   }
 }
