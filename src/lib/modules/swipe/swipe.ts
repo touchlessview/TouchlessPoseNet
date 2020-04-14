@@ -23,7 +23,7 @@ export class SwipeTracking extends StreamModule {
     this.config = { ...defaultSwipeTrackingConfig, ...config }
     this.prev = defaultPrev
     this._clearAccumulator()
-    this.relativeSize = 10
+    this.relativeSize = 9999
     this.activeCenter = { x: 0, y: 0 }
   }
 
@@ -130,8 +130,7 @@ export class SwipeTracking extends StreamModule {
     const wrist = keypoints[Kp[hand + 'Wrist']].position
     const swipeSize = this.prev[hand + 'Wrist'].x - wrist.x
     const movement = Math.abs(swipeSize)
-    const isActive = true
-    if (!isActive && movement < minMovement) return null
+    if (movement < minMovement) return null
     if (swipeSize * sign >= 0) {
       dir = 'in'
     } else {
