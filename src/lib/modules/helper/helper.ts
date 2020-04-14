@@ -30,4 +30,16 @@ export class Helper {
       return array.reduce((accumulator, value) => accumulator + value)
     } else return 0
   }
+
+  static isActiveKeypoint(keypoint: Keypoint, min: number, max: number, c: 'x' | 'y', minScore?: number) {
+    minScore = minScore || 0
+    if (
+      keypoint.score >= minScore &&
+      keypoint.position[c] >= min &&
+      keypoint.position[c] <= max
+    ) {
+      return true
+    } 
+    return false
+  }
 }
