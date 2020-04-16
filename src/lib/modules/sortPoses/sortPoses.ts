@@ -2,13 +2,12 @@ import { defaultSortPosesConfig, SortPosesConfig } from './config';
 import { Pose, Keypoint } from '@tensorflow-models/posenet';
 import { Vector2D } from '@tensorflow-models/posenet/dist/types';
 import { StreamModule } from '../streamModule';
-import { Helper } from '../helper'
+import { getKeypointsDistanse, isActiveKeypoint, getKeypointsCenter } from '../helpers'
 import { Kp, SortedPoses, ActivePose, ActiveKeypoint } from '../touchless.types';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export class SortPoses extends StreamModule {
-  shoulderCenter: Vector2D;
   config: SortPosesConfig;
   getSortedPoses: any; 
 
@@ -41,9 +40,9 @@ export class SortPoses extends StreamModule {
       const shoulders: [Keypoint, Keypoint] = [keypoints[Kp.leftShoulder], keypoints[Kp.rightShoulder]]
       if (
         +score >= this.config.pose.minScore &&
-        Helper.getKeypointsDistanse(shoulders) >= this.config.pose.minShoulderDist
+        getKeypointsDistanse(...shoulders) >= this.config.pose.minShoulderDist
       ) {
-        const shoulderCenter = Helper.getKeypointsCenter(shoulders)
+        const shoulderCenter = getKeypointsCenter(...shoulders)
         const centerDist = Math.abs(this.config.scene.center - shoulderCenter.x)
         if (this.isInActiveZone(shoulderCenter) && centerDist < minDist) {
           indexRes = index;
@@ -68,7 +67,7 @@ export class SortPoses extends StreamModule {
 
   private _getActiveKeypoints(keypoints): ActiveKeypoint[] {
     return keypoints.map(keypoint => {
-      const isActive = Helper.isActiveKeypoint(
+      const isActive = isActiveKeypoint(
         keypoint,
         this.config.pose.relativePassiveTop,
         this.config.pose.relativePassiveBottom,

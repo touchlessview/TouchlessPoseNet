@@ -3,7 +3,7 @@ import {
   SwipeTrackingConfig, Accumulator, HandsHistory, PrevPosition,
 } from './config';
 import { Kp, ActivePose, ActiveKeypoint } from '../touchless.types';
-import { Helper } from '../helper'
+import { getPoseRelativeSize, getSumArr } from '../helpers'
 import { StreamModule } from '../streamModule';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -46,7 +46,7 @@ export class SwipeTracking extends StreamModule {
       Math.abs(this.activeCenter.x - pose.center.x) < this.relativeSize / 2
     ) {
       this.activeCenter = { ...pose.center };
-      this.relativeSize = this._getPoseRelativeSize(pose.keypoints)
+      this.relativeSize = getPoseRelativeSize(pose, 50)
       this._addToAccumulator(pose.keypoints, 'left', this.relativeSize * 0.1)
       this._addToAccumulator(pose.keypoints, 'right', this.relativeSize * 0.1)
     } else {
@@ -61,8 +61,8 @@ export class SwipeTracking extends StreamModule {
   private _swipeAccumulator(hand: 'left' | 'right', relativeSize: number) {
     if (!(hand === 'left' || hand === 'right')) return null
     const maxSwipe = Math.max(
-      Helper.sumArr(this._acumulator[hand].in),
-      Helper.sumArr(this._acumulator[hand === 'left' ? 'right' : 'left'].out),
+      getSumArr(this._acumulator[hand].in),
+      getSumArr(this._acumulator[hand === 'left' ? 'right' : 'left'].out),
     )
     if (maxSwipe) {
       let result = maxSwipe / relativeSize
@@ -108,14 +108,6 @@ export class SwipeTracking extends StreamModule {
       }
     }
     this.prev[hand + 'Wrist'] = { ...keypoints[Kp[hand + 'Wrist']].position }
-  }
-
-  private _getPoseRelativeSize(keypoints: ActiveKeypoint[]) {
-    return Math.max(
-      Helper.getKeypointsDistanse([keypoints[Kp.leftShoulder], keypoints[Kp.leftElbow]]),
-      Helper.getKeypointsDistanse([keypoints[Kp.rightShoulder], keypoints[Kp.rightElbow]]),
-      Helper.getKeypointsDistanse([keypoints[Kp.leftShoulder], keypoints[Kp.rightShoulder]]),
-    )
   }
 
   private _swipeDir(keypoints: ActiveKeypoint[], hand: 'left' | 'right', minMovement: number) {
