@@ -23,39 +23,61 @@ export const getPoseRelativeSize = (pose: ActivePose, minSize: number): number =
   )
 }
 
-export const isActiveKeypoint = (keypoint: ActiveKeypoint, min: number, max: number, c: 'x' | 'y', minScore?: number) => {
+export const isActiveKeypoint = (keypoint: ActiveKeypoint, min: number, max: number, c: 'x' | 'y', minScore: number = 0) => {
   if (
-    keypoint.position[c] >= min &&
-    keypoint.position[c] <= max
+    keypoint.score > minScore &&
+    keypoint.position[c] > min &&
+    keypoint.position[c] < max
   ) {
     return true
-  } 
+  }
   return false
 }
 
-export const smoothMovement = (oldPose: ActivePose, newPose: ActivePose, frameRate: number): void => {
+export const reverseKeypoint = (keypoint: ActiveKeypoint, sceneSize: number, ignore: boolean = false): ActiveKeypoint => {
+  if (!ignore) {
+    const position = {
+      x: sceneSize - keypoint.position.x,
+      y: keypoint.position.y
+    }
+    return {...keypoint, position}
+  } else return keypoint
+}
+
+export const poseSmoothMovement = (
+  oldPose: ActivePose,
+  newPose: ActivePose,
+  addFrames: number,
+  callbackStream: (arg: ActivePose) => void,
+  complete?: ()=> void
+): void => {
   const _old = oldPose.keypoints;
   const _new = newPose.keypoints;
   let isStart = false;
   let iteration = 0;
   let interval = setInterval(() => {
     for (let i = 0; i < 17; i++) {
-      iteration++
-      _old[i].position.x = moveIteration(_old[i].position.x, _new[i].position.x, isStart);
-      _old[i].position.y = moveIteration(_old[i].position.y, _new[i].position.y, isStart);
+      const position = {
+        x: moveIteration(_old[i].position.x, _new[i].position.x, isStart),
+        y: moveIteration(_old[i].position.y, _new[i].position.y, isStart)
+      } 
+      const keypoint = { ..._old[i], position }
+      _old[i] = keypoint;
     }
-    isStart = false
-    if (iteration > 6) {
+    isStart = false;
+    if (typeof callbackStream === 'function') callbackStream(oldPose)
+    if (iteration > addFrames) {
       clearInterval(interval);
       interval = undefined;
-    }
-  }, Math.ceil(1000 / frameRate / 5))
+      if (typeof complete === 'function') complete()
+    } else iteration++
+  }, Math.ceil(1000 / addFrames))
 }
 
 const moveIteration = (oldVal: number, newVal: number, isStartVal: boolean): number => {
   const distance = Math.abs(newVal - oldVal)
   if (distance < 10 && isStartVal) return oldVal
-  if (distance > 100 || distance < 2) return newVal
+  if (distance < 2) return newVal
   else {
     const speed = Math.ceil(distance / 5);
     return newVal > oldVal ? oldVal + speed : oldVal - speed
