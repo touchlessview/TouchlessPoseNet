@@ -26,7 +26,8 @@ export class ImageStream extends StreamModule {
     }
   }
 
-  public create(): void {
+  public create(config?: CanvasConfig): void {
+    this.setConfig(config);
     if (this.config.videoElement) {
       this._willMount();
       this.canvasElement = document.createElement('canvas');
