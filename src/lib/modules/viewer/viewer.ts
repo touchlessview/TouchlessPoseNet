@@ -58,8 +58,9 @@ export class PoseViewer extends StreamModule {
       let view$ = combineLatest(
         this.tv.imageStream.frames$,
         this.tv.poses$,
-        this.tv.swipeData$
+        this.tv.swipeTracking.swipe$
       )
+      let history = { left: 0, right: 0}
       view$.subscribe(data => {
         this.context.putImageData(data[0], 0, 0);
         if (data[1]) {
@@ -72,8 +73,12 @@ export class PoseViewer extends StreamModule {
             this.drawSkeleton(keypoints, true);
           })
         }
-        this.drawSwipeProgress(data[2].left || 0, 'left', 30)
-        this.drawSwipeProgress(data[2].right || 0, 'right', 30)
+        
+        this.drawSwipeProgress(history.left || data[2].left || 0, 'left', 30)
+        this.drawSwipeProgress(history.right || data[2].right || 0, 'right', 30)
+
+        data[2].left > 0.99 ? history.left = 1 : history.left = 0;
+        data[2].right > 0.99 ? history.right = 1 : history.right = 0;
         this.drawSceneSettings();
       })
     }
