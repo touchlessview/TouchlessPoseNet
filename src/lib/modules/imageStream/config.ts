@@ -11,5 +11,5 @@ export const defaultCanvasConfig: CanvasConfig = {
   id: 'canvas-capture',
   className: 'canvas-capture',
   rotate: 0,
-  frameRate: 10
+  frameRate: 5
 };
