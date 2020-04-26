@@ -34,7 +34,7 @@ export class DatGUI {
     const update$ = new Subject()
     this.videoStream = this.posesDetections.addFolder('Image Strean')
     this.videoStream.add(config, 'rotate', [-90, 0, 90])
-    this.videoStream.add(config, 'frameRate', this._getSelectArr(6, 30, 2))
+    this.videoStream.add(config, 'frameRate', [5, 10, 20, 30])
     this.videoStream.__controllers.forEach(controller => {
       controller.onChange(() => { update$.next() });
     });
