@@ -26,26 +26,22 @@ export class TouchlessView extends StreamModule {
     this._willMount();
     await this.videoStream.create();
     await this.poseNet.create();
-    this.imageStream.setConfig({ videoElement: this.videoStream.videoElement })
-    this.imageStream.create();
+    this.imageStream.create({ videoElement: this.videoStream.videoElement });
     this.sortPoses.create();
-    this.swipeTracking.create();
+   
     
     this.poses$ = this.imageStream.frames$.pipe(
-      this.poseNet.operator(),
-      this.sortPoses.operator(),
+      this.poseNet.estimatePoses(),
+      this.sortPoses.sort(),
       share()
     )
 
     this.activePose$ = this.poses$.pipe(
-      map(data => data.activePoses[0]),
+      this.sortPoses.activePose(),
       share()
     )
 
-    this.swipeData$ = this.activePose$.pipe(
-      this.swipeTracking.operator(),
-      share()
-    )
+    this.swipeTracking.create({ activePose$: this.activePose$ });
 
     this._didMount();
   }

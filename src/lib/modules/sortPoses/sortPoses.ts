@@ -2,14 +2,14 @@ import { defaultSortPosesConfig, SortPosesConfig } from './config';
 import { Pose, Keypoint } from '@tensorflow-models/posenet';
 import { Vector2D } from '@tensorflow-models/posenet/dist/types';
 import { StreamModule } from '../streamModule';
-import { getKeypointsDistanse, isActiveKeypoint, getKeypointsCenter } from '../helpers'
+import { getKeypointsDistanse, isActiveKeypoint, getKeypointsCenter, getPoseRelativeSize } from '../helpers'
 import { Kp, SortedPoses, ActivePose, ActiveKeypoint } from '../touchless.types';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, share } from 'rxjs/operators';
 
 export class SortPoses extends StreamModule {
   config: SortPosesConfig;
-  getSortedPoses: any; 
+  getSortedPoses: any;
 
   constructor(config?: SortPosesConfig) {
     super()
@@ -26,9 +26,16 @@ export class SortPoses extends StreamModule {
     }
   }
 
-  public operator() {
+  public sort() {
     return (source: Observable<Pose[]>) =>
       source.pipe(map(poses => this.getSortedPoses(poses)))
+  }
+
+  public activePose() {
+    return (source: Observable<SortedPoses>) =>
+      source.pipe(
+        map(data => this._setTimeAndRelativeSize(data.activePoses[0])),
+      )
   }
 
   private _getSortedPoses(poses: Pose[]): SortedPoses {
@@ -80,5 +87,15 @@ export class SortPoses extends StreamModule {
   public isInActiveZone({ x }) {
     return x >= this.config.scene.passiveLeft &&
       x <= this.config.scene.width - this.config.scene.passiveRight
+  }
+
+  private _setTimeAndRelativeSize(pose: ActivePose): ActivePose {
+    if (pose !== undefined) {
+      pose.relativeSize = getPoseRelativeSize(pose, 100); 
+      pose.time = new Date().getTime();
+      return pose
+    } else {
+      return undefined
+    }
   }
 }
