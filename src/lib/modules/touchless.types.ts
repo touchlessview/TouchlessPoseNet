@@ -1,4 +1,5 @@
 import { Pose, Vector2D, Keypoint } from "@tensorflow-models/posenet/dist/types";
+import { SwipeAccumulator } from "./swipe/SwipeAccumulator";
 
 export enum TouchlessEventType {
   SlideLeft = 'SlideLeft',
@@ -14,6 +15,7 @@ export interface SwipeData {
   left?: number;
   right?: number
 }
+
 export interface ActiveKeypoint extends Keypoint {
   isActive?: boolean
 }
@@ -21,7 +23,22 @@ export interface ActiveKeypoint extends Keypoint {
 export interface ActivePose  {
   keypoints: ActiveKeypoint[];
   score: number;
-  center: Vector2D
+  center: Vector2D;
+  time?: number;
+  relativeSize?: number;
+}
+
+export interface PoseHand extends ActivePose {
+  side: string;
+  moveDir?: 'in' | 'out' | 'top' | 'bottom';
+  moveSize?: number;
+  swipeIn?: number;
+  swipeOut?: number;
+}
+
+export interface HandAccumulator {
+  hand: PoseHand;
+  accumulator: SwipeAccumulator;
 }
 
 export enum Kp {
