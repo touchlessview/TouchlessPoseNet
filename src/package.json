@@ -37,7 +37,7 @@
     "@tensorflow-models/posenet": "^2.2.1",
     "@tensorflow/tfjs-converter": "^1.5.2",
     "@tensorflow/tfjs-core": "^1.5.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "rxjs": "^6.5.4",
     "tfjs": "^0.6.0"
   }
